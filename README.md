@@ -19,6 +19,11 @@ The braille canvas was originally [drawille](https://github.com/asciimoo/drawill
 
 In the end, I thought the answers to my problems could be wrapped up in a single, fairly straight forward file.
 
+### Compatibility:
+No attempts made at achieving ncurses-level compatibility, but it should work on any modern terminal emulator.
+
+Tested on foot, alacritty and kitty.
+
 ### Install:
 Download/clone `pytui.py` and import.
 
@@ -157,9 +162,9 @@ for x in range(100):
     y = randrange(int(plot.miny), int(plot.maxy))
     plot.line(px, py, x, y)
     (px, py) = (x, y)
-
     left.appendLine(f'{x}, {y}')
-    right.setContent(plot.draw())
+
+right.setContent(plot.draw())
 
 # draw all final windows
 for window in (header, footer, left, right):
