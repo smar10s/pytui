@@ -18,7 +18,7 @@ footer.append_line('--- Footer ---', 'center')
 
 body.append_line('body')
 body.append_line(
-    Text.style('styled inline text', {'fg': (0xf7768e), 'bg': (0x1a1b26)})
+    Text('styled inline text').style({'fg': (0xf7768e), 'bg': (0x1a1b26)})
 )
 
 # draw all final windows

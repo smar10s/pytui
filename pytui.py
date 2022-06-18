@@ -232,7 +232,7 @@ class Window():
         self.buffer = []
 
     def justify_line(self, line: str, justify: str = 'left') -> str:
-        length = len(Text.strip_ansi(line))
+        length = len(Text(line).strip_ansi())
         if length > self.width:
             raise Exception(f'line ({length}) too wide, max ({self.width})')
 
@@ -416,35 +416,34 @@ class StyledWindow(Window):
         self.style = style
 
     def draw_line(self, line: str) -> None:
-        ansi_style = Text.style('', self.style, '')
+        ansi_style = Text('').style(self.style, '')
         line = ansi_style + line.replace("\x1b[0m", "\x1b[0m" + ansi_style)
         self.terminal.write(line)
 
 
 class Text():
-    """Utility classs for dealing with ANSI text."""
+    """Utility class for dealing with ANSI text."""
 
-    @staticmethod
-    def strip_ansi(string: str) -> str:
+    def __init__(self, string: str) -> None:
+        self.string = string
+
+    def strip_ansi(self) -> str:
         """Strips any ANSI codes from the input string."""
-        return re.compile(r'(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]').sub('', string)
+        pattern = re.compile(r'(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]')
+        return pattern.sub('', self.string)
 
-    @staticmethod
-    def splitrgb(c: int) -> tuple[int, int, int]:
+    def splitrgb(self, c: int) -> tuple[int, int, int]:
         return ((c >> 16) & 0x0000ff, (c >> 8) & 0x0000ff, c & 0x0000ff)
 
-    @staticmethod
-    def rgb(c) -> tuple[int, int, int]:
+    def rgb(self, c) -> tuple[int, int, int]:
         if type(c) is int:
-            return Text.splitrgb(c)
+            return self.splitrgb(c)
         return c
 
-    @staticmethod
-    def style(string: str, options: dict, terminator: str = "\x1b[0m") -> str:
+    def style(self, options: dict, terminator: str = "\x1b[0m") -> str:
         """Applies an ANSI style to a string.
 
         Args:
-            string:     Input string.
             options:    A dictionary of style options. Currently only 'fg' and
                 'bg' for foreground and background colors, passed as RGB int
                 (0x102030) or tuples ((0x10, 0x20, 0x30).)
@@ -455,10 +454,10 @@ class Text():
         """
         codes = []
         if 'fg' in options:
-            codes.append("\x1b[38;2;%d;%d;%dm" % Text.rgb(options['fg']))
+            codes.append("\x1b[38;2;%d;%d;%dm" % self.rgb(options['fg']))
         if 'bg' in options:
-            codes.append("\x1b[48;2;%d;%d;%dm" % Text.rgb(options['bg']))
-        return ''.join(codes) + string + terminator
+            codes.append("\x1b[48;2;%d;%d;%dm" % self.rgb(options['bg']))
+        return ''.join(codes) + self.string + terminator
 
 
 # Work-in-Progress
