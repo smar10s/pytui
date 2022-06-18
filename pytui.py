@@ -64,22 +64,14 @@ class Canvas():
             y = round(y1 + (yd / steps * i))
             self.set(x, y)
 
-    def drawRow(self, row: int) -> str:
-        """Returns a row of 2x4 braille points as text.
-
-        Args:
-            row: Row index.
-
-        Returns:
-            Row as text string.
-        """
+    def draw_row(self, row: int) -> str:
         i = row * self.cols
         chars = [chr(0x2800 + self.codes[i + x]) for x in range(self.cols)]
         return ''.join(chars)
 
     def draw(self) -> str:
         """Returns the canvas as text."""
-        return "\n".join([self.drawRow(row) for row in range(self.rows)])
+        return "\n".join([self.draw_row(row) for row in range(self.rows)])
 
 
 class Plot():
@@ -116,7 +108,7 @@ class Plot():
     def translate(self, v: float, a: float, b: float, s: float) -> int:
         return round((v - a) / (b - a) * s)
 
-    def translateXY(self, x: float, y: float) -> tuple[int, int]:
+    def translate_xy(self, x: float, y: float) -> tuple[int, int]:
         # flip y to match common plots
         cx = self.translate(x, self.minx, self.maxx, self.canvas.width - 1)
         cy = self.translate(y, self.maxy, self.miny, self.canvas.height - 1)
@@ -129,7 +121,7 @@ class Plot():
             x: X coordinate.
             y: Y coordinate.
         """
-        self.canvas.set(*self.translateXY(x, y))
+        self.canvas.set(*self.translate_xy(x, y))
 
     def line(self, x1: float, y1: float, x2: float, y2: float) -> None:
         """Draws a line between two coordinate points.
@@ -140,7 +132,7 @@ class Plot():
             x2: End X coordinate.
             y2: End Y coordinate.
         """
-        self.canvas.line(*self.translateXY(x1, y1), *self.translateXY(x2, y2))
+        self.canvas.line(*self.translate_xy(x1, y1), *self.translate_xy(x2, y2))
 
     def draw(self) -> str:
         """Returns plot as text."""
@@ -162,7 +154,7 @@ class Terminal():
         """Clears the terminal."""
         self.write("\x1b[2J")
 
-    def setCursorPosition(self, x: int, y: int) -> None:
+    def set_cursor(self, x: int, y: int) -> None:
         """Sets the cursor position for next write.
 
         Args:
@@ -171,39 +163,39 @@ class Terminal():
         """
         self.write("\x1b[%d;%dH" % (y + 1, x + 1))
 
-    def hideCursor(self) -> None:
+    def hide_cursor(self) -> None:
         """Hides cursor."""
         self.write("\x1b[?25l")
 
-    def showCursor(self) -> None:
+    def show_cursor(self) -> None:
         """Shows cursor."""
         self.write("\x1b[?25h")
 
-    def resetColors(self) -> None:
+    def reset_colors(self) -> None:
         """Resets background and foreground colors."""
         self.write("\x1b[0m")
 
     def fullscreen(self) -> None:
         """Clears the screen, hides the cursor and moves it to the top left."""
         self.clear()
-        self.hideCursor()
-        self.setCursorPosition(0, 0)
+        self.hide_cursor()
+        self.set_cursor(0, 0)
 
     def reset(self) -> None:
         """Resets colors and shows the cursor."""
-        self.resetColors()
-        self.showCursor()
+        self.reset_colors()
+        self.show_cursor()
 
-    def getSize(self) -> os.terminal_size:
+    def get_size(self) -> os.terminal_size:
         return os.get_terminal_size()
 
-    def getColumns(self) -> int:
+    def get_columns(self) -> int:
         """Returns current terminal width."""
-        return self.getSize().columns
+        return self.get_size().columns
 
-    def getLines(self) -> int:
+    def get_lines(self) -> int:
         """Returns current terminal height."""
-        return self.getSize().lines
+        return self.get_size().lines
 
 
 class Window():
@@ -239,8 +231,8 @@ class Window():
         """Clears the content of this window."""
         self.buffer = []
 
-    def justifyLine(self, line: str, justify: str = 'left') -> str:
-        length = len(Text.stripAnsiCodes(line))
+    def justify_line(self, line: str, justify: str = 'left') -> str:
+        length = len(Text.strip_ansi(line))
         if length > self.width:
             raise Exception(f'line ({length}) too wide, max ({self.width})')
 
@@ -252,7 +244,7 @@ class Window():
         else:
             return line.center(width)
 
-    def appendLine(self, line: str, justify: str = 'left') -> None:
+    def append_line(self, line: str, justify: str = 'left') -> None:
         """Appends a line, scrolling if necessary.
 
         Args:
@@ -264,9 +256,9 @@ class Window():
         """
         if len(self.buffer) >= self.height:     # scroll up
             self.buffer = self.buffer[1:]
-        self.buffer.append(self.justifyLine(line, justify))
+        self.buffer.append(self.justify_line(line, justify))
 
-    def prependLine(self, line: str, justify: str = 'left') -> None:
+    def prepend_line(self, line: str, justify: str = 'left') -> None:
         """Prepends a line, scrolling if necessary.
 
         Args:
@@ -278,30 +270,30 @@ class Window():
         """
         if len(self.buffer) >= self.height:     # scroll down
             self.buffer = self.buffer[:-1]
-        self.buffer.insert(0, self.justifyLine(line, justify))
+        self.buffer.insert(0, self.justify_line(line, justify))
 
-    def drawLine(self, line: str) -> None:
+    def draw_line(self, line: str) -> None:
         self.terminal.write(line)
 
     def draw(self) -> None:
         """Writes current buffer to terminal (but does not flush.)"""
         for i in range(self.height):
-            self.terminal.setCursorPosition(self.x, self.y + i)
-            haveLine = i < len(self.buffer)
-            self.drawLine(self.buffer[i] if haveLine else ''.ljust(self.width))
+            self.terminal.set_cursor(self.x, self.y + i)
+            have = i < len(self.buffer)
+            self.draw_line(self.buffer[i] if have else ''.ljust(self.width))
 
-    def setBuffer(self, buffer: list[str]) -> None:
+    def update_buffer(self, buffer: list[str]) -> None:
         """Updates current buffer.
 
         Buffer must be of the correct dimensions.
         """
         self.buffer = buffer
 
-    def setContent(self, content: str) -> None:
+    def update_content(self, content: str) -> None:
         """Updates buffer from multiline string."""
-        self.setBuffer(content.splitlines())
+        self.update_buffer(content.splitlines())
 
-    def splitRange(self, total: int, *args) -> list[int]:
+    def splitrange(self, total: int, *args) -> list[int]:
         available = total
         values = []
 
@@ -331,8 +323,8 @@ class Window():
             raise Exception('not enough room to split')
 
         # overflow into the last available spot
-        lastBlank = max(i for i, w in enumerate(values) if w == -1)
-        values[lastBlank] = math.ceil(available/blanks)
+        last_blank = max(i for i, w in enumerate(values) if w == -1)
+        values[last_blank] = math.ceil(available/blanks)
 
         # fill the remaining
         return [available//blanks if x == -1 else x for x in values]
@@ -360,7 +352,7 @@ class Window():
         """
         windows = []
         y = self.y
-        for height in self.splitRange(self.height, *args):
+        for height in self.splitrange(self.height, *args):
             windows.append(self.create(self.x, y, self.width, height))
             y += height
         return windows
@@ -387,7 +379,7 @@ class Window():
         """
         windows = []
         x = self.x
-        for width in self.splitRange(self.width, *args):
+        for width in self.splitrange(self.width, *args):
             windows.append(self.create(x, self.y, width, self.height))
             x += width
         return windows
@@ -420,12 +412,12 @@ class StyledWindow(Window):
     def create(self, x, y, w, h) -> StyledWindow:
         return StyledWindow(x, y, w, h, self.style)
 
-    def setStyle(self, style: dict) -> None:
+    def update_style(self, style: dict) -> None:
         self.style = style
 
-    def drawLine(self, line: str) -> None:
-        ansiStyle = Text.style('', self.style, '')
-        line = ansiStyle + line.replace("\x1b[0m", "\x1b[0m" + ansiStyle)
+    def draw_line(self, line: str) -> None:
+        ansi_style = Text.style('', self.style, '')
+        line = ansi_style + line.replace("\x1b[0m", "\x1b[0m" + ansi_style)
         self.terminal.write(line)
 
 
@@ -433,18 +425,18 @@ class Text():
     """Utility classs for dealing with ANSI text."""
 
     @staticmethod
-    def stripAnsiCodes(string: str) -> str:
+    def strip_ansi(string: str) -> str:
         """Strips any ANSI codes from the input string."""
         return re.compile(r'(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]').sub('', string)
 
     @staticmethod
-    def splitRGB(c: int) -> tuple[int, int, int]:
+    def splitrgb(c: int) -> tuple[int, int, int]:
         return ((c >> 16) & 0x0000ff, (c >> 8) & 0x0000ff, c & 0x0000ff)
 
     @staticmethod
-    def getRGB(c) -> tuple[int, int, int]:
+    def rgb(c) -> tuple[int, int, int]:
         if type(c) is int:
-            return Text.splitRGB(c)
+            return Text.splitrgb(c)
         return c
 
     @staticmethod
@@ -463,9 +455,9 @@ class Text():
         """
         codes = []
         if 'fg' in options:
-            codes.append("\x1b[38;2;%d;%d;%dm" % Text.getRGB(options['fg']))
+            codes.append("\x1b[38;2;%d;%d;%dm" % Text.rgb(options['fg']))
         if 'bg' in options:
-            codes.append("\x1b[48;2;%d;%d;%dm" % Text.getRGB(options['bg']))
+            codes.append("\x1b[48;2;%d;%d;%dm" % Text.rgb(options['bg']))
         return ''.join(codes) + string + terminator
 
 

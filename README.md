@@ -37,7 +37,8 @@ Most of the documentation is in the code itself. Try `help()` or `pydoc`.
 from pytui import Canvas
 
 
-def drawOctant(canvas: Canvas, cx: int, cy: int, x: int, y: int) -> None:
+# bresenham's circle
+def octant(canvas: Canvas, cx: int, cy: int, x: int, y: int) -> None:
     canvas.set(cx+x, cy+y)
     canvas.set(cx-x, cy+y)
     canvas.set(cx+x, cy-y)
@@ -48,13 +49,12 @@ def drawOctant(canvas: Canvas, cx: int, cy: int, x: int, y: int) -> None:
     canvas.set(cx-y, cy-x)
 
 
-# bresenham's circle
-def drawCircle(canvas: Canvas, cx: int, cy: int, r: int) -> None:
+def circle(canvas: Canvas, cx: int, cy: int, r: int) -> None:
     x = 0
     y = r
     d = 3 - 2 * r
 
-    drawOctant(canvas, cx, cy, x, y)
+    octant(canvas, cx, cy, x, y)
 
     while y >= x:
         x += 1
@@ -63,14 +63,14 @@ def drawCircle(canvas: Canvas, cx: int, cy: int, r: int) -> None:
             d = d + 4 * (x - y) + 10
         else:
             d = d + 4 * x + 6
-        drawOctant(canvas, cx, cy, x, y)
+        octant(canvas, cx, cy, x, y)
 
 
 # characters are taller than wide
 canvas = Canvas(20, 10)
 
 # draw circle at center
-drawCircle(canvas, canvas.width // 2, canvas.height // 2, 10)
+circle(canvas, canvas.width // 2, canvas.height // 2, 10)
 
 print(canvas.draw())
 ```
@@ -80,6 +80,7 @@ print(canvas.draw())
 ```
 from pytui import Plot
 from math import pi, sin
+
 
 # create a plot from 0,-1 to 2*pi,1 to capture one full sine wave
 plot = Plot(40, 10, 0, -1, 2*pi, 1)
@@ -104,10 +105,11 @@ Like above, but fullscreen with terminal reset after.
 from pytui import Terminal, Plot
 from math import pi, sin
 
+
 terminal = Terminal()
 terminal.fullscreen()
 
-plot = Plot(terminal.getColumns(), terminal.getLines()-1, 0, -1, 2*pi, 1)
+plot = Plot(terminal.get_columns(), terminal.get_lines()-1, 0, -1, 2*pi, 1)
 
 # draw X-axis
 plot.line(0, 0, 2*pi, 0)
@@ -129,11 +131,12 @@ terminal.reset()
 ```
 from pytui import Window
 
+
 # create a window at the top left, append lines with different justifications
 window = Window(0, 0, 9, 3)
-window.appendLine('a')
-window.appendLine('b', 'center')
-window.appendLine('c', 'right')
+window.append_line('a')
+window.append_line('b', 'center')
+window.append_line('c', 'right')
 window.draw()
 ```
 ![window-simple](docs/images/window-simple.png)
@@ -143,17 +146,19 @@ window.draw()
 from pytui import Window, Plot
 from random import randrange
 
+
 # create an initial "screen" to sub-divide
 screen = Window(0, 0, 50, 25)
 
 # horizontally split into 1 line tall header and footer with remainder for body
 (header, body, footer) = screen.hsplit(1, None, 1)
+
 # vertically split body into 20% left and 80% right
 (left, right) = body.vsplit(0.2)
 
 # add some header/footer text
-header.appendLine('--- Header ---', 'center')
-footer.appendLine('--- Footer ---', 'center')
+header.append_line('--- Header ---', 'center')
+footer.append_line('--- Footer ---', 'center')
 
 # create a random plot, show points left and plot right
 plot = Plot(body.width, body.height, 0, 0, 100, 100)
@@ -162,9 +167,9 @@ for x in range(100):
     y = randrange(int(plot.miny), int(plot.maxy))
     plot.line(px, py, x, y)
     (px, py) = (x, y)
-    left.appendLine(f'{x}, {y}')
+    left.append_line(f'{x}, {y}')
 
-right.setContent(plot.draw())
+right.update_content(plot.draw())
 
 # draw all final windows
 for window in (header, footer, left, right):
@@ -176,6 +181,7 @@ for window in (header, footer, left, right):
 ```
 from pytui import StyledWindow, Text
 
+
 # create an initial "screen" to sub-divide
 # windows split from this inherit the same style
 screen = StyledWindow(0, 0, 50, 25, {'fg': (0xa9b1d6), 'bg': (0x1a1b26)})
@@ -184,16 +190,16 @@ screen = StyledWindow(0, 0, 50, 25, {'fg': (0xa9b1d6), 'bg': (0x1a1b26)})
 (header, body, footer) = screen.hsplit(3, None, 1)
 
 # re-style header and footer
-header.setStyle({'bg': (0xa9b1d6), 'fg': (0x1a1b26)})
-footer.setStyle({'fg': (0x565f89), 'bg': (0x414868)})
+header.update_style({'bg': (0xa9b1d6), 'fg': (0x1a1b26)})
+footer.update_style({'fg': (0x565f89), 'bg': (0x414868)})
 
 # add some text
-header.appendLine('')
-header.appendLine('--- Header ---', 'center')
-footer.appendLine('--- Footer ---', 'center')
+header.append_line('')
+header.append_line('--- Header ---', 'center')
+footer.append_line('--- Footer ---', 'center')
 
-body.appendLine('body')
-body.appendLine(
+body.append_line('body')
+body.append_line(
     Text.style('styled inline text', {'fg': (0xf7768e), 'bg': (0x1a1b26)})
 )
 
