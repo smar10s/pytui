@@ -161,7 +161,7 @@ header.append_line('--- Header ---', 'center')
 footer.append_line('--- Footer ---', 'center')
 
 # create a random plot, show points left and plot right
-plot = Plot(body.width, body.height, 0, 0, 100, 100)
+plot = Plot(right.width, right.height, 0, 0, 100, 100)
 (px, py) = (0, 0)
 for x in range(100):
     y = randrange(int(plot.miny), int(plot.maxy))

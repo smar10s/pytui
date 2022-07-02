@@ -108,7 +108,7 @@ class Plot():
     def translate(self, v: float, a: float, b: float, s: float) -> int:
         return round((v - a) / (b - a) * s)
 
-    def translate_xy(self, x: float, y: float) -> tuple[int, int]:
+    def translatexy(self, x: float, y: float) -> tuple[int, int]:
         # flip y to match common plots
         cx = self.translate(x, self.minx, self.maxx, self.canvas.width - 1)
         cy = self.translate(y, self.maxy, self.miny, self.canvas.height - 1)
@@ -121,7 +121,7 @@ class Plot():
             x: X coordinate.
             y: Y coordinate.
         """
-        self.canvas.set(*self.translate_xy(x, y))
+        self.canvas.set(*self.translatexy(x, y))
 
     def line(self, x1: float, y1: float, x2: float, y2: float) -> None:
         """Draws a line between two coordinate points.
@@ -132,7 +132,7 @@ class Plot():
             x2: End X coordinate.
             y2: End Y coordinate.
         """
-        self.canvas.line(*self.translate_xy(x1, y1), *self.translate_xy(x2, y2))
+        self.canvas.line(*self.translatexy(x1, y1), *self.translatexy(x2, y2))
 
     def draw(self) -> str:
         """Returns plot as text."""
@@ -291,7 +291,7 @@ class Window():
 
     def update_content(self, content: str) -> None:
         """Updates buffer from multiline string."""
-        self.update_buffer(content.splitlines())
+        self.update_buffer(list(map(self.justify_line, content.splitlines())))
 
     def splitrange(self, total: int, *args) -> list[int]:
         available = total
@@ -419,6 +419,7 @@ class StyledWindow(Window):
         ansi_style = Text('').style(self.style, '')
         line = ansi_style + line.replace("\x1b[0m", "\x1b[0m" + ansi_style)
         self.terminal.write(line)
+        self.terminal.reset_colors()
 
 
 class Text():
@@ -458,6 +459,15 @@ class Text():
         if 'bg' in options:
             codes.append("\x1b[48;2;%d;%d;%dm" % self.rgb(options['bg']))
         return ''.join(codes) + self.string + terminator
+
+
+def shutdown(signal, frame):
+    """A shutdown function that restores terminal state and exists.
+
+    Intended to be used as a SIGINT handler.
+    """
+    Terminal().reset()
+    sys.exit(0)
 
 
 # Work-in-Progress
