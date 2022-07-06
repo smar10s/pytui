@@ -461,11 +461,8 @@ class Text():
         return ''.join(codes) + self.string + terminator
 
 
-def shutdown(signal, frame):
-    """A shutdown function that restores terminal state and exists.
-
-    Intended to be used as a SIGINT handler.
-    """
+def shutdown():
+    """A shutdown function that restores terminal state and exists."""
     Terminal().reset()
     sys.exit(0)
 
