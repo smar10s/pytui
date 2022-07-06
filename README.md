@@ -32,6 +32,8 @@ Most of the documentation is in the code itself. Try `help()` or `pydoc`.
 
 ### Examples:
 
+Examples of individual features below. For an application example see [sigkit](https://github.com/smar10s/sigkit).
+
 #### Canvas
 ```
 from pytui import Canvas
