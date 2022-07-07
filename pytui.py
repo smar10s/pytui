@@ -537,7 +537,7 @@ class Keyboard:
 
 
 def shutdown():
-    """A shutdown function that restores terminal state and exists."""
+    """A shutdown function that restores terminal state and exits."""
     Terminal().reset()
     Keyboard().reset()
     sys.exit(0)
