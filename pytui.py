@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Callable
 import sys
 import math
 import re
@@ -6,6 +7,10 @@ import os
 import threading
 import tty
 import termios
+
+
+# capture state at import time so multiple instances can reset to the same
+termattrs = termios.tcgetattr(sys.stdin)
 
 
 class Canvas():
@@ -426,6 +431,11 @@ class Text():
     """Utility class for dealing with ANSI text."""
 
     def __init__(self, string: str) -> None:
+        """Creates a new text instance.
+
+        Args:
+            string: A string.
+        """
         self.string = string
 
     def strip_ansi(self) -> str:
@@ -442,7 +452,7 @@ class Text():
         return c
 
     def style(self, options: dict, terminator: str = "\x1b[0m") -> str:
-        """Applies an ANSI style to a string.
+        """Applies an ANSI style to the string.
 
         Args:
             options:    A dictionary of style options. Currently only 'fg' and
@@ -461,40 +471,35 @@ class Text():
         return ''.join(codes) + self.string + terminator
 
 
-def shutdown():
-    """A shutdown function that restores terminal state and exists."""
-    Terminal().reset()
-    sys.exit(0)
-
-
-# Work-in-Progress
-# -----------------
-
 class Keyboard:
+    """A non-blocking key dispatcher.
+
+    Uses Python threading and some terminal shenanigans to simulate something
+    like an event based keyboard listener.
+
+    Limitations are many but include inability to read modifier keys like
+    ctrl/alt. Shift can be read as uppercase/row.
+    """
     UP = 'up'
     DOWN = 'down'
     RIGHT = 'right'
     LEFT = 'left'
+    UNKNOWN = 'unknown'
 
-    def __init__(self):
-        self.attrs = termios.tcgetattr(sys.stdin)
+    def __init__(self) -> None:
+        """Creates a new keyboard instance that listeners can be attached to.
+        """
         self.thread = None
-        self.listeners = []
+        self.listeners: list[Callable[[str], None]] = []
 
-    def disableLineBuffering(self):
+    def disable_line_buffering(self) -> None:
         tty.setcbreak(sys.stdin)
 
-    def restoreTerminal(self):
-        termios.tcsetattr(sys.stdin, termios.TCSADRAIN, self.attrs)
+    def reset(self) -> None:
+        """Resets stdin to the state captured at module load time."""
+        termios.tcsetattr(sys.stdin, termios.TCSADRAIN, termattrs)
 
-    def addListener(self, cb):
-        self.listeners.append(cb)
-
-    def callListeners(self, key):
-        for cb in self.listeners:
-            cb(key)
-
-    def readAnsiChar(self):
+    def read_ansi(self) -> str:
         # already read '\x1b', read '[' and interpret next
         sys.stdin.read(1)
         c = sys.stdin.read(1)
@@ -506,17 +511,33 @@ class Keyboard:
             return self.RIGHT
         elif '\x44' == c:
             return self.LEFT
+        else:
+            return self.UNKNOWN
 
-    def readKey(self):
+    def read(self) -> None:
         while True:
             c = sys.stdin.read(1)
             if '\x1b' == c:
-                c = self.readAnsiChar()
-            self.callListeners(c)
+                c = self.read_ansi()
+            for fn in self.listeners:
+                fn(c)
 
-    def listen(self, cb):
+    def listen(self, fn: Callable[[str], None]) -> None:
+        """Adds a new keyboard listener to be invoked when a key has been
+        pressed.
+
+        Args:
+            fn: A callback function that accepts a character or magic string
+                (arrow keys.)
+        """
         if not self.thread:
-            self.disableLineBuffering()
-            threading.Thread(target=self.readKey, daemon=True).start()
+            self.disable_line_buffering()
+            threading.Thread(target=self.read, daemon=True).start()
+        self.listeners.append(fn)
 
-        self.addListener(cb)
+
+def shutdown():
+    """A shutdown function that restores terminal state and exists."""
+    Terminal().reset()
+    Keyboard().reset()
+    sys.exit(0)

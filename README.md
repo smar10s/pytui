@@ -9,6 +9,7 @@ A minimal Python library for text user-interfaces, inspired by but not based on 
 - Basic windows with support for scrolling and styling.
 - Vim inspired window splitting for more advanced layouts.
 - Braille code based "canvas" and plotting.
+- Non-blocking keyboard input on Linux (sort of.)
 
 ### Why?
 I'm comfortable with ncurses, but needed 24-bit colors. While it's possible to achieve that in ncurses, the result is a mess. There are no shortages of other TUI libraries (blessed, Urwid, Textualize, pytermgui, etc), but they tend do to a lot more than I wanted (borders, window management, widget libaries, etc). Some are also based on ncurses and inherit the same color limitations.
@@ -208,3 +209,44 @@ for window in (header, footer, body):
     window.draw()
 ```
 ![window-styled](docs/images/window-styled.png)
+
+#### Keyboard
+
+Simulates non-blocking keyboard input on Linux using Python threads.
+
+There is probably a better way to do this, please let me know if I missed something.
+
+The example below loops endlessly until `q` terminates it, and prints any other key.
+
+The shutdown function ensures line buffering is restored on exit.
+
+```
+import signal
+import os
+from time import sleep
+from pytui import Keyboard, shutdown
+
+
+def listener(c: str) -> None:
+    if c == 'q':
+        print('quiting')
+        # exit() will just end the thread, kill whole process, interrupt sleep
+        os.kill(os.getpid(), signal.SIGINT)
+    else:
+        print(f'{c} - press q to quit')
+
+
+keyboard = Keyboard()
+
+# ensure ctrl+c restores terminal state before messing with it
+signal.signal(signal.SIGINT, lambda signal, frame: shutdown())
+
+# attach our listener
+keyboard.listen(listener)
+
+# do something until 'q' interrupts
+while True:
+    sleep(1)
+
+shutdown()
+```
