@@ -391,7 +391,7 @@ class Window():
 
 
 class StyledWindow(Window):
-    """A window with ANSI colours applied to content."""
+    """A window with ANSI style applied to content."""
 
     def __init__(
         self,
@@ -443,21 +443,29 @@ class Text():
         pattern = re.compile(r'(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]')
         return pattern.sub('', self.string)
 
-    def splitrgb(self, c: int) -> tuple[int, int, int]:
+    def split_rgb(self, c: int) -> tuple[int, int, int]:
         return ((c >> 16) & 0x0000ff, (c >> 8) & 0x0000ff, c & 0x0000ff)
 
     def rgb(self, c) -> tuple[int, int, int]:
         if type(c) is int:
-            return self.splitrgb(c)
+            return self.split_rgb(c)
         return c
 
     def style(self, options: dict, terminator: str = "\x1b[0m") -> str:
         """Applies an ANSI style to the string.
 
         Args:
-            options:    A dictionary of style options. Currently only 'fg' and
-                'bg' for foreground and background colors, passed as RGB int
-                (0x102030) or tuples ((0x10, 0x20, 0x30).)
+            options:    A dictionary of style options. Available:
+                fg and bg
+                    foreground and background color, as RGB int (0x102030)
+                    or separate values in a tuple ((0x10, 0x20, 0x30))
+                bold
+                faint
+                italic
+                underline
+                blink
+                negative
+                crossed
             terminator: A style terminator. Defaults to ANSI color reset.
 
         Returns:
@@ -468,6 +476,20 @@ class Text():
             codes.append("\x1b[38;2;%d;%d;%dm" % self.rgb(options['fg']))
         if 'bg' in options:
             codes.append("\x1b[48;2;%d;%d;%dm" % self.rgb(options['bg']))
+        if 'bold' in options and options['bold']:
+            codes.append("\033[1m")
+        if 'faint' in options and options['faint']:
+            codes.append("\033[2m")
+        if 'italic' in options and options['italic']:
+            codes.append("\033[3m")
+        if 'underline' in options and options['underline']:
+            codes.append("\033[4m")
+        if 'blink' in options and options['blink']:
+            codes.append("\033[5m")
+        if 'negative' in options and options['negative']:
+            codes.append("\033[7m")
+        if 'crossed' in options and options['crossed']:
+            codes.append("\033[9m")
         return ''.join(codes) + self.string + terminator
 
 
@@ -485,6 +507,9 @@ class Keyboard:
     RIGHT = 'right'
     LEFT = 'left'
     UNKNOWN = 'unknown'
+    BACKSPACE = '\x7f'
+    ENTER = '\x0a'
+    TAB = '\x09'
 
     def __init__(self) -> None:
         """Creates a new keyboard instance that listeners can be attached to.
@@ -534,6 +559,85 @@ class Keyboard:
             self.disable_line_buffering()
             threading.Thread(target=self.read, daemon=True).start()
         self.listeners.append(fn)
+
+
+class InputPrompt:
+    """An input prompt using a Window and Keyboard.
+
+    Characters typed are echoed back in the window, scrolling as necessary.
+
+    Tabs and enter are not echoed, instead a callback handler is called with
+    the current buffer as argument.
+    """
+
+    def __init__(
+        self,
+        window: Window,
+        keyboard: Keyboard,
+        on_enter: Callable[[str, list[str]], None],
+        on_tab: Callable[[str, list[str]], None] = None,
+        prefix: str = '# ',
+        cursor: str = Text('_').style({'blink': True})
+    ) -> None:
+        """Creates a new input prompt for a given window and keyboard.
+
+        CAVEAT/TODO: both prefix and cursor must each fit on one line because
+        proper ANSI text wrapping isn't implemented (yet.)
+
+        Args:
+            window: The window that will render the prompt and anything typed.
+            keyboard: A keyboard instance to capture input.
+            on_enter: A callback invoked with the current buffer on enter.
+            on_tab: A callback invoked with the current buffer on tab.
+            prefix: The prefix shown before any input. May be styled.
+            cursor: The cursor shown. May be styled.
+        """
+        self.buffer = ''
+        self.window = window
+        self.keyboard = keyboard
+        self.on_tab = on_tab
+        self.on_enter = on_enter
+        self.prefix = prefix
+        self.cursor = cursor
+        self.terminal = Terminal()
+
+    def listener(self, key: str) -> None:
+        if key == Keyboard.BACKSPACE:
+            self.buffer = self.buffer[:-1]
+        elif key == Keyboard.TAB:
+            if self.on_tab:
+                self.on_tab(self.buffer, self.buffer.split())
+        elif key == Keyboard.ENTER:
+            self.on_enter(self.buffer, self.buffer.split())
+            self.buffer = ''
+        else:
+            self.buffer += key
+        self.refresh()
+
+    def refresh(self) -> None:
+        self.window.clear()
+        for line in self.format_buffer().splitlines():
+            self.window.append_line(line)
+        self.window.draw()
+        self.terminal.flush()
+
+    def format_buffer(self) -> str:
+        # this really just splits prefix + buffer + cursor into window width
+        # lines, but prefix and cursor may contain ANSI codes, so we strip,
+        # split, and reconstitute
+        n = self.window.width
+        plain_prefix = Text(self.prefix).strip_ansi()
+        plain_cursor = Text(self.cursor).strip_ansi()
+        buffer = plain_prefix + self.buffer + plain_cursor
+        buffer = "\n".join([buffer[i:i+n] for i in range(0, len(buffer), n)])
+        buffer = buffer[len(plain_prefix):-len(plain_cursor)]
+        return self.prefix + buffer + self.cursor
+
+    def listen(self) -> None:
+        """Start listening for input."""
+        self.terminal.hide_cursor()
+        self.keyboard.listen(self.listener)
+        self.refresh()
 
 
 def shutdown():
