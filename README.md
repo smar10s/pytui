@@ -29,11 +29,13 @@ Tested on foot, alacritty and kitty.
 Download/clone `pytui.py` and import.
 
 ### Usage:
-Most of the documentation is in the code itself. Try `help()` or `pydoc`.
+Most of the documentation is in the code itself. Try using `pydoc` or calling `help()` on the module or any of its features. For example, `help(pytui.Window)` should display `Window` usage details.
+
+The examples below illustrate some common use cases.
 
 ### Examples:
 
-Examples of individual features below. For an application example see [sigkit](https://github.com/smar10s/sigkit).
+Examples of individual features below. For a more complete application example see [sigkit](https://github.com/smar10s/sigkit).
 
 #### Canvas
 ```
@@ -251,4 +253,38 @@ while True:
     sleep(1)
 
 shutdown()
+```
+
+#### Input Prompt
+
+This combines a keyboard with a window to create a text input prompt. The keyboard listens for input and echos it to the window, calling a handler on tab or enter. The window may be multiple lines and will scroll as necessary. The prompt (`# ` for example) and cursor may be customized and styled. The window may also be a StyledWindow.
+
+The following example will prompt for input and exit if 'quit' as entered.
+
+
+```
+import signal
+import os
+from time import sleep
+from pytui import Window, Keyboard, InputPrompt, shutdown
+
+
+# ensure ctrl+c restores terminal state before messing with it
+signal.signal(signal.SIGINT, lambda signal, frame: shutdown())
+
+
+# handler quits on 'quit', ignores all other input
+def on_enter(buffer: str, tokens: list[str]) -> None:
+    if buffer == 'quit':
+        os.kill(os.getpid(), signal.SIGINT)
+
+
+# create new input prompt using 10x10 window that will scroll if necessary
+prompt = InputPrompt(Window(0, 0, 10, 10), Keyboard(), on_enter)
+prompt.listen()
+
+
+# spin until quit
+while True:
+    sleep(1)
 ```
