@@ -259,7 +259,7 @@ shutdown()
 
 This combines a keyboard with a window to create a text input prompt. The keyboard listens for input and echos it to the window, calling a handler on tab or enter. The window may be multiple lines and will scroll as necessary. The prompt (`# ` for example) and cursor may be customized and styled. The window may also be a StyledWindow.
 
-The following example will prompt for input and exit if 'quit' as entered.
+The following example will prompt for input and exit if 'quit' was entered.
 
 
 ```
