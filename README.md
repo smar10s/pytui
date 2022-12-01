@@ -12,7 +12,7 @@ A minimal Python library for text user-interfaces, inspired by but not based on 
 - Non-blocking keyboard input on Linux (sort of.)
 
 ### Why?
-I'm comfortable with ncurses, but needed 24-bit colors. While it's possible to achieve that in ncurses, the result is a mess. There are no shortages of other TUI libraries (blessed, Urwid, Textualize, pytermgui, etc), but they tend do to a lot more than I wanted (borders, window management, widget libaries, etc). Some are also based on ncurses and inherit the same color limitations.
+I'm comfortable with ncurses, but needed 24-bit colors (for [sigkit](https://github.com/smar10s/sigkit)). While it's possible to achieve that in ncurses, the result is a mess. There are no shortages of other TUI libraries (blessed, Urwid, Textualize, pytermgui, etc), but they tend do to a lot more than I wanted (borders, window management, widget libaries, etc). Some are also based on ncurses and inherit the same color limitations.
 
 For braille plotting I originally considered [plotille](https://github.com/tammoippen/plotille), but I wanted more control over styling (ex. disable axis and labels.)
 
@@ -38,6 +38,13 @@ The examples below illustrate some common use cases.
 Examples of individual features below. For a more complete application example see [sigkit](https://github.com/smar10s/sigkit).
 
 #### Canvas
+
+A basic pixel-like canvas implemented using braille dots.
+
+Individual dots cannot be styled because several dots may be represented by a single character, but the entire canvas can be.
+
+Origin is at top left with Y descending, computer graphics style.
+
 ```
 from pytui import Canvas
 
@@ -82,6 +89,13 @@ print(canvas.draw())
 ![canvas](docs/images/canvas.png)
 
 #### Plot
+
+An extension of the canvas that implements a 2D plot with arbitrary coordinate range like a traditional plot.
+
+Unlike a canvas, the origin is at the center of the coordinate range with Y ascending.
+
+The example below plots one full sine wave (i.e. from 0 to 2pi) as a 40x10 character frame.
+
 ```
 from pytui import Plot
 from math import pi, sin
@@ -105,7 +119,11 @@ print(plot.draw())
 ![plot](docs/images/plot.png)
 
 #### Terminal
-Like above, but fullscreen with terminal reset after.
+
+Utility functions for interacting with the terminal.
+
+This example is the same as above, but draws the plot fullscreen with terminal reset after.
+
 ```
 from pytui import Terminal, Plot
 from math import pi, sin
@@ -133,6 +151,14 @@ terminal.reset()
 ![terminal](docs/images/terminal.png)
 
 #### Simple Window
+
+Simple windows that can be positioned anywhere on the screen.
+
+Content added with `append_line` or `prepend_line` will scroll lines up or down respectively.
+
+Use `update_content` to update entire window from a multiline string.
+
+
 ```
 from pytui import Window
 
@@ -147,6 +173,31 @@ window.draw()
 ![window-simple](docs/images/window-simple.png)
 
 #### Split Windows
+
+Windows can be vertically and horizontally sub-divided using `vsplit` and `hsplit`. These accept one or more integers or floating point values, each representing the size of a new window. Integers are interpreted as absolute values in characters, floats as ratio of the original window. If there is any remainder, it is used to create one final window. `None` can also be used to explicit refer to remaining space, and may be specified multiple times, dividing space among them.
+
+Argument examples:
+
+- `header, body = window.hsplit(1)`
+    - horizontally split `window` into a new one-character tall `header`, with any remainder in `body`
+- `header, body = window.hsplit(1, None)`
+    - same as above
+- `window.vsplit(0.2, 0.8)`
+    - vertically split `window` into two new ones, `left` sized 20% and `right` 80% of original
+- `window.vsplit(0.2, None)`
+    - same as above
+- `left, right = window.vsplit(0.2)`
+    - same as above
+- `header, body, footer = window.hsplit(1, None, 1)`
+    - split `window` into three: one character tall `header` and `footer`, any remainder in `body`
+- `header, a, b, footer` = `window.hsplit(1, None, None, 1)`
+    - same as above, but divide remainder equally between `a` and `b`
+- `header, body, status = window.hsplit(0.2, None, 1)`
+    - split into 20% tall `header`, one character tall `status` and any remainder in `body`
+
+The example below creates four windows: a header and footer, and a body divided into left and right panels.
+
+
 ```
 from pytui import Window, Plot
 from random import randrange
@@ -183,6 +234,11 @@ for window in (header, footer, left, right):
 ![window-layout](docs/images/window-layout.png)
 
 #### Styled Windows
+
+Same as above, but apply ANSI text styling to each window.
+
+Note `Text` being used to apply inline styles to a window already styled.
+
 ```
 from pytui import StyledWindow, Text
 
@@ -213,6 +269,30 @@ for window in (header, footer, body):
     window.draw()
 ```
 ![window-styled](docs/images/window-styled.png)
+
+#### Text
+
+Utility functions for styling ANSI text strings.
+
+To use, create a `Text` objects from a string, then call `style()` with a dictionary of style arguments. More than one may be used.
+
+```
+from pytui import Text
+
+print(
+    Text('coloured text').style({'fg': (0xf7768e), 'bg': (0x1a1b26)}),
+    Text('bold text').style({'bold': True}),
+    Text('faint text').style({'faint': True}),
+    Text('italic text').style({'italic': True}),
+    Text('underlined text').style({'underline': True}),
+    Text('blinking text').style({'blink': True}),
+    Text('negative text').style({'negative': True}),
+    Text('crossed text').style({'crossed': True})
+)
+```
+
+![text](docs/images/text.png)
+
 
 #### Keyboard
 
