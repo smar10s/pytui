@@ -235,7 +235,7 @@ for window in (header, footer, left, right):
 
 #### Styled Windows
 
-Same as above, but apply ANSI text styling to each window.
+Similar to above, but apply ANSI text styling to each window.
 
 Note `Text` being used to apply inline styles to a window already styled.
 
@@ -274,7 +274,7 @@ for window in (header, footer, body):
 
 Utility functions for styling ANSI text strings.
 
-To use, create a `Text` objects from a string, then call `style()` with a dictionary of style arguments. More than one may be used.
+To use, create a `Text` object from a string, then call `style()` with a dictionary of style arguments. More than one may be used.
 
 ```
 from pytui import Text
