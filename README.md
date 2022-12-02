@@ -92,7 +92,7 @@ print(canvas.draw())
 
 An extension of the canvas that implements a 2D plot with arbitrary coordinate range like a traditional plot.
 
-Unlike a canvas, the origin is at the center of the coordinate range with Y ascending.
+Unlike a canvas, the origin is at 0,0 with Y ascending.
 
 The example below plots one full sine wave (i.e. from 0 to 2pi) as a 40x10 character frame.
 
