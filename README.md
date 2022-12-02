@@ -182,9 +182,9 @@ Argument examples:
     - horizontally split `window` into a new one-character tall `header`, with any remainder in `body`
 - `header, body = window.hsplit(1, None)`
     - same as above
-- `window.vsplit(0.2, 0.8)`
+- `left, right = window.vsplit(0.2, 0.8)`
     - vertically split `window` into two new ones, `left` sized 20% and `right` 80% of original
-- `window.vsplit(0.2, None)`
+- `left, right = window.vsplit(0.2, None)`
     - same as above
 - `left, right = window.vsplit(0.2)`
     - same as above
