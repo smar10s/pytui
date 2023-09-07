@@ -471,6 +471,7 @@ class Text():
         Returns:
             String with ANSI codes.
         """
+        string = self.string
         codes = []
         if 'fg' in options:
             codes.append("\x1b[38;2;%d;%d;%dm" % self.rgb(options['fg']))
@@ -490,7 +491,49 @@ class Text():
             codes.append("\033[7m")
         if 'crossed' in options and options['crossed']:
             codes.append("\033[9m")
-        return ''.join(codes) + self.string + terminator
+        return ''.join(codes) + string + terminator if codes else string
+
+    def wrap(self, width: int) -> list[str]:
+        """Wraps a string by breaking it into 'width' character wide lines.
+
+        The string may include ANSI style codes as applied by style().
+        YMMV with other codes or ANSI strings.
+
+        Args:
+            width: The size at which to wrap the string and create a new line.
+
+        Returns:
+            A list of strings, each being at most 'width' characters long.
+        """
+        string = self.string
+        terminator = '\x1b[0m'
+        lines = []  # list of 'width' wide lines
+        line = ''   # current line
+        style = ''  # current style
+        i = 0       # current index
+        length = 0  # current line length
+        while i < len(string):
+            if string[i:i+len(terminator)] == terminator:   # clear style
+                style = ''
+                line += terminator
+                i += len(terminator)
+            elif string[i] in ('\033', '\x1b'):             # add style
+                k = string[i:].find('m')
+                code = string[i:i+k+1]
+                style += code
+                line += code
+                i += len(code)
+            else:                                           # add character
+                line += string[i]
+                i += 1
+                length += 1
+                if length >= width:                          # break line
+                    lines.append(line + (terminator if line[-4:] != terminator else ''))
+                    line = style
+                    length = 0
+        if length:   # add any remainder
+            lines.append(line + (terminator if line[-4:] != terminator else ''))
+        return lines
 
 
 class Keyboard:
@@ -581,9 +624,6 @@ class InputPrompt:
     ) -> None:
         """Creates a new input prompt for a given window and keyboard.
 
-        CAVEAT/TODO: both prefix and cursor must each fit on one line because
-        proper ANSI text wrapping isn't implemented (yet.)
-
         Args:
             window: The window that will render the prompt and anything typed.
             keyboard: A keyboard instance to capture input.
@@ -615,23 +655,13 @@ class InputPrompt:
         self.refresh()
 
     def refresh(self) -> None:
-        self.window.clear()
-        for line in self.format_buffer().splitlines():
-            self.window.append_line(line)
-        self.window.draw()
-        self.terminal.flush()
-
-    def format_buffer(self) -> str:
-        # this really just splits prefix + buffer + cursor into window width
-        # lines, but prefix and cursor may contain ANSI codes, so we strip,
-        # split, and reconstitute
-        n = self.window.width
-        plain_prefix = Text(self.prefix).strip_ansi()
-        plain_cursor = Text(self.cursor).strip_ansi()
-        buffer = plain_prefix + self.buffer + plain_cursor
-        buffer = "\n".join([buffer[i:i+n] for i in range(0, len(buffer), n)])
-        buffer = buffer[len(plain_prefix):-len(plain_cursor)]
-        return self.prefix + buffer + self.cursor
+        (terminal, window) = (self.terminal, self.window)
+        (prefix, buffer, cursor) = (self.prefix, self.buffer, self.cursor)
+        window.clear()
+        for line in Text(prefix + buffer + cursor).wrap(window.width):
+            window.append_line(line)
+        window.draw()
+        terminal.flush()
 
     def listen(self) -> None:
         """Start listening for input."""
