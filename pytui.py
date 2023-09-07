@@ -263,6 +263,17 @@ class Window():
             self.buffer = self.buffer[1:]
         self.buffer.append(self.justify_line(line, justify))
 
+    def append_text(self, text: str, justify: str = 'left') -> None:
+        """Appends any text string, scrolling and wrapping as necessary.
+
+        Args:
+            text: Text to append. Wraps if wider than window. May be styled.
+            justify: Justification, either left, right or center. Default left.
+
+        """
+        for line in Text(text).wrap(self.width):
+            self.append_line(line, justify)
+
     def prepend_line(self, line: str, justify: str = 'left') -> None:
         """Prepends a line, scrolling if necessary.
 
@@ -276,6 +287,17 @@ class Window():
         if len(self.buffer) >= self.height:     # scroll down
             self.buffer = self.buffer[:-1]
         self.buffer.insert(0, self.justify_line(line, justify))
+
+    def prepend_text(self, text: str, justify: str = 'left') -> None:
+        """Prepends any text string, scrolling and wrapping as necessary.
+
+        Args:
+            text: Text to prepend. Wraps if wider than window. May be styled.
+            justify: Justification, either left, right or center. Default left.
+
+        """
+        for line in Text(text).wrap(self.width):
+            self.prepend_line(line, justify)
 
     def draw_line(self, line: str) -> None:
         self.terminal.write(line)
