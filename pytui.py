@@ -534,6 +534,10 @@ class Text():
         style = ''  # current style
         i = 0       # current index
         length = 0  # current line length
+
+        def add_line() -> None:
+            lines.append(line + (terminator if line[-4:] != terminator else ''))
+
         while i < len(string):
             if string[i:i+len(terminator)] == terminator:   # clear style
                 style = ''
@@ -545,16 +549,23 @@ class Text():
                 style += code
                 line += code
                 i += len(code)
+            elif string[i] == '\n':                         # break at newline
+                add_line()
+                line = style
+                length = 0
+                i += 1
             else:                                           # add character
                 line += string[i]
                 i += 1
                 length += 1
-                if length >= width:                          # break line
-                    lines.append(line + (terminator if line[-4:] != terminator else ''))
+                if length >= width:                         # break line
+                    add_line()
                     line = style
                     length = 0
-        if length:   # add any remainder
-            lines.append(line + (terminator if line[-4:] != terminator else ''))
+                    if string[i] == '\n':                   # swallow next if newline
+                        i += 1
+        if length:
+            add_line()                                      # add any remainder
         return lines
 
 
