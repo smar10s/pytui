@@ -13,7 +13,7 @@ import termios
 termattrs = termios.tcgetattr(sys.stdin)
 
 
-class Canvas():
+class Canvas:
     """A canvas where each "pixel" is a braille code.
 
     Computer graphics style origin at top left.
@@ -79,7 +79,7 @@ class Canvas():
         return "\n".join([self.draw_row(row) for row in range(self.rows)])
 
 
-class Plot():
+class Plot:
     """A cartesian plane with origin at bottom left.
 
     Coordinate range is independent from display dimensions.
@@ -144,7 +144,7 @@ class Plot():
         return self.canvas.draw()
 
 
-class Terminal():
+class Terminal:
     """Utility methods for terminal interaction."""
 
     def flush(self) -> None:
@@ -203,7 +203,7 @@ class Terminal():
         return self.get_size().lines
 
 
-class Window():
+class Window:
     """A rectangle of text positioned somewhere on the screen.
 
     Content can be set directly or appended or prepended, scrolling up or
@@ -449,7 +449,7 @@ class StyledWindow(Window):
         self.terminal.reset_colors()
 
 
-class Text():
+class Text:
     """Utility class for dealing with ANSI text."""
 
     def __init__(self, string: str) -> None:
