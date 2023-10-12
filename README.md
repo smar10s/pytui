@@ -26,7 +26,12 @@ No attempts made at achieving ncurses-level compatibility, but it should work on
 Tested on foot, alacritty and kitty.
 
 ### Install:
-Download/clone `pytui.py` and import.
+Either get `pytui.py` and use module directly, or clone and install with pip, e.g.:
+
+```
+git clone https://github.com/smar10s/pytui/
+pip install pytui/
+```
 
 ### Usage:
 Most of the documentation is in the code itself. Try using `pydoc` or calling `help()` on the module or any of its features. For example, `help(pytui.Window)` should display `Window` usage details.
@@ -152,12 +157,18 @@ terminal.reset()
 
 #### Simple Window
 
-Simple windows that can be positioned anywhere on the screen.
+Simple "windows" that can be positioned anywhere on the screen.
 
-Content added with `append_line` or `prepend_line` will scroll lines up or down respectively.
+There are three main ways to add or update content:
+- `append_line`/`prepend_line` appends or prepends a single line no longer than the window is wide, scrolling up or down as necessary. This will throw an exception if the line is too long.
+- `append_text`/`prepend_text` appends or prepends any text string, wrapping to window width and scrolling as necessary. This should always succeed.
+- `update_content` updates the entire content from a multi-line text string by splitting it into lines. This is the fastest way to update a window buffer short of setting the buffer directly.
 
-Use `update_content` to update entire window from a multiline string.
+`update_buffer` can also be used to set the window buffer directly, but it must be of the same dimension as the window. For performance reasons this is not checked or enforced at this level.
 
+These methods _do not_ write the output buffer or draw/update the window. This must be done explicitly with `draw()`. This allows making multiple calls to update the buffer with minimal performance overhead.
+
+The terminal may also need to be flushed. This can be done with `Terminal.flush()`, directly with `sys.stdout.flush()`, or automatically on exit.
 
 ```
 from pytui import Window
