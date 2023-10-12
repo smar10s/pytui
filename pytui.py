@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Callable
+from typing import Callable, Self
 import sys
 import math
 import re
@@ -229,8 +229,8 @@ class Window:
         self.height = h
         self.buffer: list[str] = []
 
-    def create(self, x, y, w, h) -> Window:
-        return Window(x, y, w, h)
+    def create(self, x, y, w, h) -> Self:
+        return type(self)(x, y, w, h)
 
     def clear(self) -> None:
         """Clears the content of this window."""
@@ -356,8 +356,7 @@ class Window:
         # fill the remaining
         return [available//blanks if x == -1 else x for x in values]
 
-    # TODO change these to Self when 3.11 is out out
-    def hsplit(self, *args) -> list[Window]:
+    def hsplit(self, *args) -> list[Self]:
         """Horizontally splits this window into two or more new windows.
 
         Args:
@@ -384,7 +383,7 @@ class Window:
             y += height
         return windows
 
-    def vsplit(self, *args) -> list[Window]:
+    def vsplit(self, *args) -> list[Self]:
         """Vertically splits this window into two or more new windows.
 
         Args:
@@ -435,9 +434,8 @@ class StyledWindow(Window):
         super().__init__(x, y, w, h)
         self.style = style
 
-    # TODO -> Self
     def create(self, x, y, w, h) -> StyledWindow:
-        return StyledWindow(x, y, w, h, self.style)
+        return type(self)(x, y, w, h, self.style)
 
     def update_style(self, style: dict) -> None:
         self.style = style
