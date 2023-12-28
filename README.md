@@ -9,6 +9,7 @@ A minimal Python library for text user-interfaces, inspired by but not based on 
 - Basic windows with support for scrolling and styling.
 - Vim inspired window splitting for more advanced layouts.
 - Braille code based "canvas" and plotting.
+- Unicode half block element based 24-bit "canvas".
 - Non-blocking keyboard input on Linux (sort of.)
 
 ### Why?
@@ -123,11 +124,35 @@ print(plot.draw())
 ```
 ![plot](docs/images/plot.png)
 
+#### Pixel Canvas
+
+Similar to canvas, but coarser in exchange for 24-bit color per "pixel".
+
+Example that draws a PIL image; a generated mandelbrot in this case.
+
+```
+from PIL import Image   # pip install pillow
+from pytui import PixelCanvas
+
+
+width = 64
+height = 64
+
+image = Image.effect_mandelbrot((width, height), (-0.7436, 0.1306, -0.7426, 0.1316), 100)
+data = list(image.convert('RGB').getdata())
+
+canvas = PixelCanvas(width, height)
+canvas.set_data(data)
+
+print(canvas.draw())
+```
+![pixel-canvas](docs/images/pixel-canvas.png)
+
 #### Terminal
 
 Utility functions for interacting with the terminal.
 
-This example is the same as above, but draws the plot fullscreen with terminal reset after.
+This example is the same as the plot above, but draws it fullscreen with terminal reset after.
 
 ```
 from pytui import Terminal, Plot

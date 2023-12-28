@@ -144,6 +144,57 @@ class Plot:
         return self.canvas.draw()
 
 
+class PixelCanvas:
+    """A canvas where each "pixel" is a unicode half block element.
+
+    Computer graphics style origin at top left.
+    """
+
+    def __init__(
+        self,
+        width: int,
+        height: int,
+        background: tuple[int, int, int] = (0, 0, 0)
+    ) -> None:
+        """Creates new canvas.
+
+        Args:
+            width: Canvas width in "pixels" (characters).
+            height: Canvas height in "pixels" (characters*2).
+            background: The default pixel color as (R,G,B) tuple.
+        """
+        self.width = width
+        self.height = height
+        self.data = [background]*(width*height)
+
+    def set_data(self, data: list[tuple[int, int, int]]) -> None:
+        """Sets the entire canvas from a width*height wide list."""
+        self.data = data
+
+    def set(self, x: int, y: int, color: tuple[int, int, int]) -> None:
+        """Sets a pixel.
+
+        Args:
+            x: X coordinate.
+            y: Y coordinate.
+            color: Pixel color as (R,G,B) tuple.
+        """
+        self.data[(y * self.width) + x] = color
+
+    def draw(self) -> str:
+        """Returns the canvas as text."""
+        lines = []
+        for y in range(self.height):
+            if 0 == y % 2:
+                line = ''
+                for x in range(self.width):
+                    top = self.data[(y * self.width) + x]
+                    bottom = self.data[((y+1) * self.width) + x]
+                    line += Text('▀').style({'fg': top, 'bg': bottom})
+                lines.append(line)
+        return "\n".join(lines)
+
+
 class Terminal:
     """Utility methods for terminal interaction."""
 
