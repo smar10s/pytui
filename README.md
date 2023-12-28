@@ -6,11 +6,11 @@ A minimal Python library for text user-interfaces, inspired by but not based on 
 ### Features
 - Minimal, no non-default dependencies.
 - 24-bit colors.
-- Basic windows with support for scrolling and styling.
-- Vim inspired window splitting for more advanced layouts.
-- Braille code based "canvas" and plotting.
-- Unicode half block element based 24-bit "canvas".
-- Non-blocking keyboard input on Linux (sort of.)
+- [Basic windows with support for scrolling and styling.](#simple-window)
+- [Vim inspired window splitting for more advanced layouts.](#split-windows)
+- [Braille code based "canvas" and plotting.](#canvas)
+- [Unicode half block element based 24-bit "canvas".](#pixel-canvas)
+- [Non-blocking keyboard input on Linux (sort of.)](#keyboard)
 
 ### Why?
 I'm comfortable with ncurses, but needed 24-bit colors (for [sigkit](https://github.com/smar10s/sigkit)). While it's possible to achieve that in ncurses, the result is a mess. There are no shortages of other TUI libraries (blessed, Urwid, Textualize, pytermgui, etc), but they tend do to a lot more than I wanted (borders, window management, widget libaries, etc). Some are also based on ncurses and inherit the same color limitations.
