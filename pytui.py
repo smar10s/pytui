@@ -672,7 +672,7 @@ class Keyboard:
             for fn in self.listeners:
                 fn(c)
 
-    def listen(self, fn: Callable[[str], None]) -> None:
+    def add_listener(self, fn: Callable[[str], None]) -> None:
         """Adds a new keyboard listener to be invoked when a key has been
         pressed.
 
@@ -680,10 +680,20 @@ class Keyboard:
             fn: A callback function that accepts a character or magic string
                 (arrow keys.)
         """
+        self.listeners.append(fn)
+
+    def listen(self, fn: Callable[[str], None] | None = None) -> None:
+        """Starts listening for keyboard input in a separate thread,
+        optionally registering a callback first.
+
+        Args:
+            fn: An optional callback function. See add_listener.
+        """
+        if fn:
+            self.add_listener(fn)
         if not self.thread:
             self.disable_line_buffering()
             threading.Thread(target=self.read, daemon=True).start()
-        self.listeners.append(fn)
 
 
 def shutdown():
